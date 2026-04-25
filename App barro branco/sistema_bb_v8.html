@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BB System v8</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:#0a0a0a; --s1:#111; --s2:#181818; --s3:#1e1e1e;
+  --border:#252525; --border2:#313131;
+  --text:#e8e8e8; --muted:#555; --muted2:#888;
+  --red:#e03030; --yellow:#e8b400; --green:#1db954; --blue:#2d7aff;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;height:100%;overflow:hidden;}
+
+.shell{max-width:430px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+
+/* SCREENS */
+.screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:76px;}
+.screen.active{display:flex;flex-direction:column;}
+.screen::-webkit-scrollbar{width:2px;}
+.screen::-webkit-scrollbar-thumb{background:var(--border2);}
+
+/* TOPBAR */
+.topbar{padding:16px 20px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;letter-spacing:2px;}
+.logo span{color:var(--red);}
+.topbar-badge{font-size:11px;font-weight:600;letter-spacing:1px;color:var(--muted2);background:var(--s1);border:1px solid var(--border);padding:3px 10px;border-radius:2px;}
+
+/* BOTTOM NAV */
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;height:68px;background:var(--s1);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 2px;z-index:100;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 6px;border-radius:6px;border:none;background:none;color:var(--muted);flex:1;transition:background .15s;}
+.nav-btn.active{color:#fff;}
+.nav-btn:hover{background:var(--s2);}
+.nav-icon{font-size:17px;line-height:1;}
+.nav-label{font-size:8px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;}
+
+/* HELPERS */
+.secao-label{font-size:11px;font-weight:600;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:16px 20px 10px;}
+.screen-title{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;letter-spacing:1px;line-height:1;}
+.screen-sub{font-size:13px;color:var(--muted2);margin-top:2px;}
+.inner-tabs{display:flex;margin:12px 20px 0;background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:4px;}
+.inner-tab{flex:1;padding:7px 4px;border:none;background:none;font-family:'Barlow',sans-serif;font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--muted2);cursor:pointer;border-radius:4px;transition:all .15s;text-transform:uppercase;}
+.inner-tab.active{background:var(--s2);color:var(--text);}
+
+/* ═══════════════ HOJE ═══════════════ */
+.hoje-greeting{padding:18px 20px 0;}
+.hoje-greeting p{font-size:13px;color:var(--muted2);margin-bottom:4px;}
+.hoje-title{font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:800;letter-spacing:1px;line-height:1;}
+.hoje-title span{color:var(--red);}
+.alerta{margin:12px 20px 0;padding:11px 14px;background:rgba(224,48,48,.08);border:1px solid rgba(224,48,48,.3);border-left:3px solid var(--red);border-radius:4px;font-size:13px;color:#e88;line-height:1.5;}
+.alerta strong{color:var(--red);}
+.progress-wrap{margin:12px 20px 0;}
+.progress-top{display:flex;justify-content:space-between;font-size:12px;color:var(--muted2);margin-bottom:7px;}
+.progress-top strong{color:var(--text);}
+.pbar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.pbar-fill{height:100%;background:var(--green);border-radius:2px;transition:width .5s ease;}
+.bloco-lista{margin-top:10px;}
+.bloco{margin:0 20px 9px;background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:13px 16px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:all .15s;}
+.bloco:hover{border-color:var(--border2);background:var(--s2);}
+.bloco.done{opacity:.4;}
+.bloco-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.bloco-info{flex:1;min-width:0;}
+.bloco-materia{font-size:10px;font-weight:600;letter-spacing:1px;color:var(--muted2);text-transform:uppercase;margin-bottom:2px;}
+.bloco-tema{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bloco-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.bloco-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.bloco-time{font-size:11px;color:var(--muted2);}
+.bloco-status{font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:2px;}
+.status-pendente{background:rgba(232,180,0,.12);color:var(--yellow);}
+.status-feito{background:rgba(29,185,84,.12);color:var(--green);}
+
+/* ═══════════════ CRONÔMETRO ═══════════════ */
+.ativa-card{margin:12px 20px 0;background:var(--s1);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.ativa-top{padding:13px 16px 0;display:flex;align-items:center;justify-content:space-between;}
+.ativa-materia-lbl{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);}
+.ativa-status{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.pulse.paused{background:var(--yellow);animation:none;}
+.ativa-tema{padding:4px 16px 0;font-family:'Barlow Condensed',sans-serif;font-size:21px;font-weight:800;letter-spacing:1px;line-height:1.1;}
+.crono-display{display:flex;align-items:baseline;justify-content:center;padding:16px 16px 12px;}
+.crono-hms{font-family:'Barlow Condensed',sans-serif;font-size:60px;font-weight:800;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums;}
+.bloco-progress{padding:0 16px 12px;}
+.bp-top{display:flex;justify-content:space-between;font-size:11px;color:var(--muted2);margin-bottom:6px;}
+.bp-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.bp-fill{height:100%;background:var(--blue);border-radius:2px;transition:width .5s linear;}
+.controles{display:flex;gap:10px;padding:0 16px 13px;}
+.btn-play{flex:1;height:48px;border:none;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:2px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-play.rodando{background:rgba(232,180,0,.1);color:var(--yellow);border:1px solid rgba(232,180,0,.3);}
+.btn-play.pausado{background:var(--green);color:#000;border:1px solid var(--green);}
+.btn-stop{width:48px;height:48px;border-radius:6px;background:rgba(224,48,48,.08);color:var(--red);border:1px solid rgba(224,48,48,.25);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.mat-item{margin:0 20px 8px;background:var(--s1);border:1px solid var(--border);border-radius:6px;padding:11px 16px;display:flex;align-items:center;gap:13px;cursor:pointer;transition:all .15s;}
+.mat-item:hover{border-color:var(--border2);background:var(--s2);}
+.mat-item.selecionada{border-color:rgba(45,122,255,.4);background:rgba(45,122,255,.05);}
+.mat-item.rodando-item{border-color:rgba(29,185,84,.4);background:rgba(29,185,84,.05);}
+.mat-emoji{font-size:19px;flex-shrink:0;}
+.mat-dados{flex:1;min-width:0;}
+.mat-nome{font-size:13px;font-weight:600;}
+.mat-meta-lbl{font-size:11px;color:var(--muted2);margin-top:1px;}
+.mat-tempo{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:700;color:var(--muted2);font-variant-numeric:tabular-nums;}
+.mat-tempo.ativo{color:var(--green);}
+
+/* ═══════════════ QUESTÕES ═══════════════ */
+.q-view{display:none;flex:1;flex-direction:column;}
+.q-view.active{display:flex;}
+.mat-card{margin:0 20px 10px;background:var(--s1);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.mat-card-header{padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+.mat-card-emoji{font-size:24px;}
+.mat-card-info{flex:1;}
+.mat-card-nome{font-weight:700;font-size:15px;}
+.mat-card-meta{font-size:11px;color:var(--muted2);}
+.temas-lista{display:none;padding:0 16px 12px;gap:6px;flex-direction:column;}
+.mat-card.expandido .temas-lista{display:flex;}
+.tema-btn{background:var(--s2);border:1px solid var(--border);padding:10px 12px;border-radius:6px;color:var(--text);text-align:left;font-size:13px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.tema-pct{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;}
+.q-topbar{padding:12px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);}
+.q-back{background:none;border:none;color:var(--blue);font-weight:600;cursor:pointer;}
+.q-info{flex:1;}
+.q-mat-label{font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:1px;}
+.q-tema-label{font-size:14px;font-weight:700;}
+.q-contador{font-family:'Barlow Condensed',sans-serif;font-weight:800;color:var(--muted);}
+.placar-strip{display:flex;gap:1px;background:var(--border);margin-bottom:16px;}
+.placar-card{flex:1;background:var(--bg);padding:10px;text-align:center;}
+.placar-num{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;}
+.placar-lbl{font-size:9px;font-weight:700;color:var(--muted2);text-transform:uppercase;}
+.questao-card{padding:0 20px 20px;}
+.q-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.q-num-badge{font-size:10px;font-weight:800;background:var(--s2);padding:3px 8px;border-radius:4px;color:var(--muted2);}
+.q-dificuldade{font-size:10px;font-weight:800;text-transform:uppercase;}
+.dif-facil{color:var(--green);} .dif-medio{color:var(--yellow);} .dif-dificil{color:var(--red);}
+.q-enunciado{font-size:16px;line-height:1.5;margin-bottom:20px;font-weight:500;}
+.alternativas{display:flex;flex-direction:column;gap:10px;}
+.alt-btn{display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--s1);border:1px solid var(--border);border-radius:8px;color:var(--text);text-align:left;cursor:pointer;transition:all .2s;}
+.alt-letra{width:24px;height:24px;background:var(--s2);border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;}
+.alt-texto{font-size:14px;line-height:1.4;}
+.alt-btn.correta{border-color:var(--green);background:rgba(29,185,84,.1);}
+.alt-btn.errada{border-color:var(--red);background:rgba(224,48,48,.1);}
+.alt-btn.neutra{opacity:0.5;}
+.comentario{display:none;padding:20px;background:var(--s1);border-top:1px solid var(--border);margin-top:20px;}
+.comentario.visible{display:block;}
+.resultado-banner{display:flex;align-items:center;gap:12px;padding:12px;border-radius:8px;margin-bottom:16px;}
+.resultado-banner.acerto{background:rgba(29,185,84,.1);color:var(--green);}
+.resultado-banner.erro{background:rgba(224,48,48,.1);color:var(--red);}
+.resultado-icone{font-size:24px;font-weight:800;}
+.resultado-titulo{font-weight:800;font-size:16px;}
+.resultado-sub{font-size:12px;opacity:0.8;}
+.ia-explicacao{background:var(--s2);padding:16px;border-radius:8px;font-size:14px;line-height:1.6;}
+.proxima-wrap{padding:20px;}
+.btn-proxima{width:100%;padding:16px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-weight:800;font-size:14px;cursor:pointer;}
+
+/* ═══════════════ CRONOGRAMA ═══════════════ */
+.dia-tab{flex:1;padding:10px 0;text-align:center;cursor:pointer;border-bottom:2px solid transparent;color:var(--muted2);}
+.dia-tab.ativo{color:var(--text);border-bottom-color:var(--red);}
+.dia-abrev{font-size:10px;font-weight:700;text-transform:uppercase;}
+.dia-num{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;}
+.crono-lista{padding:10px 20px;}
+.crono-bloco{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+.crono-cor{width:4px;height:30px;border-radius:2px;flex-shrink:0;}
+.crono-info{flex:1;}
+.crono-hora{font-size:11px;color:var(--muted2);font-weight:600;}
+.crono-materia-nome{font-size:14px;font-weight:700;}
+.crono-tema{font-size:12px;color:var(--muted2);}
+.crono-badge{font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;background:var(--s2);color:var(--muted2);cursor:pointer;}
+.crono-badge.feito{background:rgba(29,185,84,.1);color:var(--green);}
+.add-bloco-btn{margin:0 20px 20px;padding:14px;background:var(--s1);border:1px dashed var(--border2);border-radius:8px;color:var(--muted2);font-weight:700;font-size:12px;cursor:pointer;text-align:center;}
+
+/* MODAL MINIMALISTA */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:12px;width:100%;max-width:360px;padding:24px;}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;margin-bottom:20px;}
+.modal-field{margin-bottom:16px;}
+.modal-label{display:block;font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;margin-bottom:6px;}
+.modal-select, .modal-input{width:100%;background:var(--s2);border:1px solid var(--border);padding:12px;border-radius:6px;color:var(--text);font-family:inherit;font-size:14px;}
+.modal-actions{display:flex;gap:10px;margin-top:24px;}
+.modal-save{flex:1;background:var(--blue);color:#fff;border:none;padding:12px;border-radius:6px;font-weight:800;cursor:pointer;}
+.modal-cancel{background:var(--s2);color:var(--text);border:1px solid var(--border);padding:12px;border-radius:6px;font-weight:700;cursor:pointer;}
+.modal-delete{background:rgba(224,48,48,.1);color:var(--red);border:1px solid rgba(224,48,48,.2);padding:12px;border-radius:6px;cursor:pointer;}
+
+/* MAT GRID MINIMALISTA NO MODAL */
+.mat-grid-mini{display:grid;grid-template-columns:repeat(4, 1fr);gap:8px;margin-bottom:16px;}
+.mat-opt-mini{aspect-ratio:1;background:var(--s2);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;}
+.mat-opt-mini.selected{border-color:var(--blue);background:rgba(45,122,255,.1);}
+.mat-opt-emoji{font-size:20px;}
+.mat-opt-label{font-size:8px;font-weight:700;text-transform:uppercase;margin-top:4px;text-align:center;color:var(--muted2);}
+.mat-opt-mini.selected .mat-opt-label{color:var(--blue);}
+
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- ══ HOJE ══ -->
+  <div class="screen active" id="screen-hoje">
+    <div class="topbar"><div class="logo">BB<span>.</span>SYSTEM</div><div class="topbar-badge" id="badge-hoje">HOJE</div></div>
+    <div class="hoje-greeting"><p id="hoje-data">Segunda, 23 de Abril</p><div class="hoje-title">BORA, <span>ASPIRA!</span></div></div>
+    <div class="alerta" id="hoje-alerta" style="display:none"></div>
+    <div class="progress-wrap">
+      <div class="progress-top"><span>Progresso Diário</span><strong id="hoje-prog-pct">0%</strong></div>
+      <div class="pbar"><div class="pbar-fill" id="hoje-pbar-fill" style="width:0%"></div></div>
+    </div>
+    <div class="secao-label">Missões de hoje</div>
+    <div class="bloco-lista" id="hoje-blocos"></div>
+  </div>
+
+  <!-- ══ CRONÔMETRO ══ -->
+  <div class="screen" id="screen-crono">
+    <div class="topbar"><div class="logo">BB<span>.</span>CRONO</div><div class="topbar-badge" id="badge-crono">SESSÃO</div></div>
+    <div class="ativa-card">
+      <div class="ativa-top"><div class="ativa-materia-lbl" id="ativa-materia-label">SELECIONE UMA MATÉRIA</div><div class="ativa-status" id="status-label"><div class="pulse paused" id="pulse-dot"></div><span id="status-text">AGUARDANDO</span></div></div>
+      <div class="ativa-tema" id="ativa-tema">—</div>
+      <div class="crono-display"><div class="crono-hms" id="crono-hms">00:00:00</div></div>
+      <div class="bloco-progress"><div class="bp-top"><span id="bp-label">Meta: 0h</span><strong id="bp-pct">0%</strong></div><div class="bp-bar"><div class="bp-fill" id="bp-fill" style="width:0%"></div></div></div>
+      <div class="controles"><button class="btn-play pausado" id="btn-play" onclick="togglePlay()"><span id="btn-icon">▶</span> <span id="btn-label">INICIAR</span></button><button class="btn-stop" onclick="pararSessao()">⏹</button></div>
+    </div>
+    <div class="secao-label">Matérias</div>
+    <div id="materias-list"></div>
+  </div>
+
+  <!-- ══ QUESTÕES ══ -->
+  <div class="screen" id="screen-questoes">
+    <div class="q-view active" id="qv-selecao">
+      <div class="topbar"><div class="logo">BB<span>.</span>QUESTÕES</div><div class="topbar-badge">BANCO LOCAL</div></div>
+      <div style="padding:20px"><div class="screen-title">QUESTÕES</div><div class="screen-sub">Treine com o banco de questões oficial</div></div>
+      <div class="placar-strip">
+        <div class="placar-card"><div class="placar-num" id="qs-acertos">0</div><div class="placar-lbl">Acertos</div></div>
+        <div class="placar-card"><div class="placar-num" id="qs-erros">0</div><div class="placar-lbl">Erros</div></div>
+        <div class="placar-card"><div class="placar-num" id="qs-pct">—</div><div class="placar-lbl">Taxa</div></div>
+      </div>
+      <div class="secao-label">Matérias do edital</div>
+      <div id="materias-grid"></div>
+    </div>
+    <div class="q-view" id="qv-questao">
+      <div class="q-topbar"><button class="q-back" onclick="voltarSelecao()">← Voltar</button><div class="q-info"><div class="q-mat-label" id="q-mat-label">—</div><div class="q-tema-label" id="q-tema-label">—</div></div><div class="q-contador" id="q-contador">#1</div></div>
+      <div class="placar-strip">
+        <div class="placar-card"><div class="placar-num" id="p-acertos">0</div><div class="placar-lbl">Acertos</div></div>
+        <div class="placar-card"><div class="placar-num" id="p-erros">0</div><div class="placar-lbl">Erros</div></div>
+        <div class="placar-card"><div class="placar-num" id="p-pct">—</div><div class="placar-lbl">Taxa</div></div>
+      </div>
+      <div class="questao-card" id="questao-card">
+        <div class="q-header"><div class="q-num-badge" id="q-num-badge">QUESTÃO 1</div><div class="q-dificuldade" id="q-dificuldade">—</div></div>
+        <div class="q-enunciado" id="q-enunciado"></div>
+        <div class="alternativas" id="alternativas"></div>
+      </div>
+      <div class="comentario" id="comentario">
+        <div class="resultado-banner" id="resultado-banner"><div class="resultado-icone" id="resultado-icone"></div><div><div class="resultado-titulo" id="resultado-titulo"></div><div class="resultado-sub" id="resultado-sub"></div></div></div>
+        <div class="ia-explicacao" id="ia-explicacao"><div id="ia-conteudo"></div></div>
+      </div>
+      <div class="proxima-wrap" id="proxima-wrap" style="display:none"><button class="btn-proxima" onclick="gerarQuestao()">PRÓXIMA QUESTÃO →</button></div>
+    </div>
+  </div>
+
+  <!-- ══ PLANO ══ -->
+  <div class="screen" id="screen-plano">
+    <div class="topbar"><div class="logo">BB<span>.</span>PLANO</div><div class="topbar-badge">SEMANA</div></div>
+    <div style="padding:16px 20px 0"><div class="screen-title">CRONOGRAMA</div><div class="screen-sub" id="plano-sub">Planeje sua semana de estudos</div></div>
+    <div class="inner-tabs" id="semana-nav"></div>
+    <div class="crono-lista" id="crono-lista"></div>
+    <button class="add-bloco-btn" onclick="abrirModalNovo()">+ ADICIONAR BLOCO DE ESTUDO</button>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" onclick="navTo('hoje',this)"><span class="nav-icon">📋</span><span class="nav-label">Hoje</span></button>
+    <button class="nav-btn" onclick="navTo('crono',this)"><span class="nav-icon">⏱</span><span class="nav-label">Crono</span></button>
+    <button class="nav-btn" onclick="navTo('questoes',this)"><span class="nav-icon">🎯</span><span class="nav-label">Questões</span></button>
+    <button class="nav-btn" onclick="navTo('plano',this)"><span class="nav-icon">📅</span><span class="nav-label">Plano</span></button>
+  </nav>
+</div>
+
+<!-- MODAL PLANO MINIMALISTA -->
+<div class="modal-overlay" id="modal-overlay" onclick="fecharModal(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">NOVO BLOCO</div>
+    <div class="modal-label">Selecione a Matéria</div>
+    <div class="mat-grid-mini" id="modal-mat-grid"></div>
+    <div class="modal-field"><label class="modal-label">Tema do Estudo</label><input class="modal-input" id="modal-tema" type="text" placeholder="Ex: Geometria Plana"></div>
+    <div style="display:flex; gap:10px">
+      <div class="modal-field" style="flex:1"><label class="modal-label">Início</label><input class="modal-input" id="modal-hora" type="time" value="08:00"></div>
+      <div class="modal-field" style="flex:1"><label class="modal-label">Duração</label><select class="modal-select" id="modal-duracao"><option value="60">1h</option><option value="90">1h30</option><option value="120" selected>2h</option><option value="180">3h</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-save" onclick="salvarBloco()">SALVAR</button>
+      <button class="modal-delete" id="modal-delete-btn" onclick="deletarBloco()">🗑</button>
+      <button class="modal-cancel" onclick="fecharModalDireto()">SAIR</button>
+    </div>
+  </div>
+</div>
+
+<script src="banco_questoes_bb.js"></script>
+
+<script>
+// ════════════════════════════════════════
+// DADOS GLOBAIS
+// ════════════════════════════════════════
+const EDITAL = [
+  { id:'port', emoji:'📘', nome:'Português', cor:'#2d7aff', meta:7200, temas:['Interpretação de Texto','Gramática: Verbos','Sintaxe','Crase','Pontuação','Ortografia','Coesão e Coerência'] },
+  { id:'mat',  emoji:'📐', nome:'Matemática', cor:'#e03030', meta:7200, temas:['Operações Básicas','Frações e Decimais','Porcentagem','Razão e Proporção','Regra de 3','Média Aritmética','Álgebra: Equação 1º grau','Sistema 2×2','Geometria Plana','Geometria Espacial','Progressões PA e PG','Análise Combinatória'] },
+  { id:'hist', emoji:'📜', nome:'História', cor:'#e8b400', meta:5400, temas:['Grécia e Roma Antigas','Idade Média e Absolutismo','Revolução Francesa','Revolução Industrial','Guerras Mundiais','Guerra Fria','Brasil Colônia','Império Brasileiro','República Velha','Era Vargas','Ditadura Militar 1964–1985','Redemocratização e CF 1988'] },
+  { id:'geo',  emoji:'🌍', nome:'Geografia', cor:'#1db954', meta:5400, temas:['Relevo e Clima do Brasil','Hidrografia','Vegetação Brasileira','Regiões e População','Urbanização','Agropecuária e Indústria','Geopolítica e Globalização','Blocos Econômicos','Cartografia','Meio Ambiente'] },
+  { id:'fil',  emoji:'🏛️', nome:'Filosofia', cor:'#ff6b35', meta:5400, temas:['O que é Filosofia','Senso Comum vs Pensamento Crítico','Ética e Moral','Política e Democracia','Sócrates, Platão e Aristóteles','Contratualistas: Hobbes, Locke, Rousseau'] },
+  { id:'soc',  emoji:'👥', nome:'Sociologia', cor:'#c060ff', meta:5400, temas:['Cultura e Sociedade','Identidade e Diversidade','Estratificação Social','Mobilidade Social','Política, Poder e Estado','Violência e Criminalidade'] },
+  { id:'qui',  emoji:'🧪', nome:'Química', cor:'#7dde40', meta:5400, temas:['Matéria e suas Propriedades','Tabela Periódica','Ligações Químicas','Reações Químicas','Soluções','Química Ambiental'] },
+  { id:'fis',  emoji:'⚡', nome:'Física', cor:'#ff4d8f', meta:5400, temas:['Cinemática: MU e MUV','Queda Livre','Dinâmica: Leis de Newton','Energia e Trabalho','Termologia','Eletricidade'] },
+  { id:'bio',  emoji:'🔬', nome:'Biologia', cor:'#ff9d00', meta:5400, temas:['Citologia','Genética','Ecologia','Sistema Digestivo','Sistema Circulatório','Saúde e Doenças'] },
+  { id:'adm',  emoji:'🏛️', nome:'Adm. Pública', cor:'#b0b0ff', meta:5400, temas:['Noções de Administração Pública','Poderes Administrativos','Atos Administrativos','Servidores Públicos'] },
+  { id:'ing',  emoji:'🇬🇧', nome:'Inglês', cor:'#8b3cf7', meta:3600, temas:['Reading Comprehension','Sinônimos e Antônimos','Falsos Cognatos','Verbo To Be e Present Simple','Tempos Verbais','Pronomes e Preposições'] },
+  { id:'inf',  emoji:'💻', nome:'Informática', cor:'#40e0d0', meta:3600, temas:['Windows 10/11','Microsoft Word','Microsoft Excel','Internet e Segurança','LibreOffice'] },
+  { id:'atu',  emoji:'📰', nome:'Atualidades', cor:'#ffa0c0', meta:3600, temas:['Política Brasileira','Economia do Brasil','Segurança Pública SP','Governo do Estado SP e PMESP','Conflitos Internacionais','Meio Ambiente e Tecnologia'] },
+];
+
+function getMat(id){ return EDITAL.find(m=>m.id===id); }
+function pad(n){return String(n).padStart(2,'0');}
+function fmtHMS(s){return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`;}
+function fmtHM(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);if(!h)return`${m}min`;if(!m)return`${h}h`;return`${h}h${pad(m)}`;}
+function hojeKey(){const d=new Date();return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+
+// ════════════════════════════════════════
+// ESTADO GLOBAL
+// ════════════════════════════════════════
+let crono={materiaAtiva:null,inicioBruto:null,acumuladoSessao:0,sessoes:[]};
+let qEstado={matAtiva:null,temaAtivo:null,questaoAtual:null,respostaUsuario:null,acertos:0,erros:0,historico:{},contador:0,respondidasLocal:[]};
+let plano={diaAtivo:0,blocos:[[],[],[],[],[],[]]}; // Seg a Sáb
+let modalMatAtiva = 'port';
+
+const CRONO_KEY='bb_crono_v4';
+const QHIST_KEY='bb_qhist_v2';
+const PLANO_KEY='bb_plano_v3';
+
+// ════════════════════════════════════════
+// PERSISTÊNCIA
+// ════════════════════════════════════════
+function salvarTudo(){
+  localStorage.setItem(CRONO_KEY, JSON.stringify({sessoes:crono.sessoes}));
+  localStorage.setItem(QHIST_KEY, JSON.stringify({historico:qEstado.historico, acertos:qEstado.acertos, erros:qEstado.erros}));
+  localStorage.setItem(PLANO_KEY, JSON.stringify({blocos:plano.blocos}));
+}
+
+function carregarTudo(){
+  try {
+    const c = localStorage.getItem(CRONO_KEY); if(c) crono.sessoes = JSON.parse(c).sessoes || [];
+    const q = localStorage.getItem(QHIST_KEY); if(q) { const d=JSON.parse(q); qEstado.historico=d.historico||{}; qEstado.acertos=d.acertos||0; qEstado.erros=d.erros||0; }
+    const p = localStorage.getItem(PLANO_KEY); if(p) plano.blocos = JSON.parse(p).blocos || [[],[],[],[],[],[]];
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════
+// NAVEGAÇÃO
+// ════════════════════════════════════════
+function navTo(id,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='hoje') renderHoje();
+  if(id==='questoes') renderSelecao();
+  if(id==='plano') renderCronograma();
+  if(id==='crono') renderMateriasList();
+}
+
+// ════════════════════════════════════════
+// DASHBOARD HOJE
+// ════════════════════════════════════════
+function renderHoje(){
+  const d = new Date();
+  const diasN = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const mesesN = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('hoje-data').textContent = `${diasN[d.getDay()]}, ${d.getDate()} de ${mesesN[d.getMonth()]}`;
+  
+  const dow = d.getDay();
+  const diaIdx = dow === 0 ? -1 : dow - 1;
+  const blocosHoje = diaIdx >= 0 ? plano.blocos[diaIdx] : [];
+  
+  const lista = document.getElementById('hoje-blocos');
+  lista.innerHTML = '';
+  
+  if(blocosHoje.length === 0){
+    lista.innerHTML = '<div style="padding:40px 20px; text-align:center; color:var(--muted2); font-size:13px">Nenhum bloco planejado para hoje.</div>';
+  } else {
+    blocosHoje.forEach(b => {
+      const mat = getMat(b.materia);
+      const div = document.createElement('div');
+      div.className = 'bloco' + (b.concluido ? ' done' : '');
+      div.innerHTML = `
+        <div class="bloco-icon" style="background:${mat.cor}20; color:${mat.cor}">${mat.emoji}</div>
+        <div class="bloco-info">
+          <div class="bloco-materia">${mat.nome}</div>
+          <div class="bloco-tema">${b.tema}</div>
+        </div>
+        <div class="bloco-right">
+          <div class="bloco-time">${b.hora}</div>
+          <div class="bloco-status ${b.concluido ? 'status-feito' : 'status-pendente'}">${b.concluido ? 'FEITO' : 'PENDENTE'}</div>
+        </div>
+      `;
+      div.onclick = () => { b.concluido = !b.concluido; salvarTudo(); renderHoje(); };
+      lista.appendChild(div);
+    });
+  }
+
+  const total = blocosHoje.length;
+  const feitos = blocosHoje.filter(b => b.concluido).length;
+  const pct = total > 0 ? Math.round((feitos/total)*100) : 0;
+  document.getElementById('hoje-prog-pct').textContent = pct + '%';
+  document.getElementById('hoje-pbar-fill').style.width = pct + '%';
+
+  const alerta = document.getElementById('hoje-alerta');
+  const matCritica = EDITAL.map(m => {
+    const h = Object.keys(qEstado.historico).filter(k => k.startsWith(m.id)).reduce((acc, k) => {
+      acc.a += qEstado.historico[k].acertos;
+      acc.t += (qEstado.historico[k].acertos + qEstado.historico[k].erros);
+      return acc;
+    }, {a:0, t:0});
+    return { id: m.id, nome: m.nome, pct: h.t > 0 ? (h.a/h.t) : 1 };
+  }).find(m => m.pct < 0.6);
+
+  if(matCritica){
+    alerta.style.display = 'block';
+    alerta.innerHTML = `⚠️ <strong>Atenção:</strong> Seu desempenho em <strong>${matCritica.nome}</strong> está abaixo de 60%.`;
+  } else {
+    alerta.style.display = 'none';
+  }
+}
+
+// ════════════════════════════════════════
+// CRONÔMETRO (CORRIGIDO)
+// ════════════════════════════════════════
+let tickInterval=null;
+function renderMateriasList(){
+  const c=document.getElementById('materias-list'); c.innerHTML='';
+  const hoje = hojeKey();
+  EDITAL.forEach(mat=>{
+    const t = crono.sessoes.filter(s=>s.materia===mat.id && s.data===hoje).reduce((a,s)=>a+s.duracao,0);
+    const div=document.createElement('div'); div.className='mat-item' + (crono.materiaAtiva===mat.id?' selecionada':'');
+    div.id='item-'+mat.id; div.onclick=()=>selecionarMateria(mat.id);
+    div.innerHTML=`<div class="mat-emoji">${mat.emoji}</div><div class="mat-dados"><div class="mat-nome">${mat.nome}</div><div class="mat-meta-lbl">${mat.temas[0]} · meta ${fmtHM(mat.meta)}</div></div><div class="mat-tempo" id="tempo-${mat.id}">${t>0?fmtHM(t):'0min'}</div>`;
+    c.appendChild(div);
+  });
+}
+function selecionarMateria(id){
+  if(crono.inicioBruto) pausarCrono();
+  crono.materiaAtiva=id;
+  const mat=getMat(id);
+  document.getElementById('ativa-materia-label').textContent=mat.nome.toUpperCase();
+  document.getElementById('ativa-tema').textContent=mat.temas[0];
+  document.getElementById('bp-label').textContent='Meta: '+fmtHM(mat.meta);
+  renderMateriasList();
+  document.getElementById('crono-hms').textContent="00:00:00";
+  crono.acumuladoSessao = 0;
+}
+function togglePlay(){
+  if(!crono.materiaAtiva) return alert('Selecione uma matéria.');
+  crono.inicioBruto ? pausarCrono() : playarCrono();
+}
+function playarCrono(){
+  crono.inicioBruto=Date.now();
+  tickInterval=setInterval(tick, 100); // Frequência maior para precisão visual
+  document.getElementById('btn-play').className='btn-play rodando';
+  document.getElementById('btn-icon').textContent='⏸'; document.getElementById('btn-label').textContent='PAUSAR';
+  document.getElementById('pulse-dot').classList.remove('paused');
+  document.getElementById('status-text').textContent='RODANDO';
+}
+function pausarCrono(){
+  if(!crono.inicioBruto) return;
+  crono.acumuladoSessao += Math.floor((Date.now()-crono.inicioBruto)/1000);
+  crono.inicioBruto=null; clearInterval(tickInterval);
+  document.getElementById('btn-play').className='btn-play pausado';
+  document.getElementById('btn-icon').textContent='▶'; document.getElementById('btn-label').textContent='CONTINUAR';
+  document.getElementById('pulse-dot').classList.add('paused');
+  document.getElementById('status-text').textContent='PAUSADO';
+}
+function tick(){
+  if(!crono.inicioBruto) return;
+  const s = crono.acumuladoSessao + Math.floor((Date.now()-crono.inicioBruto)/1000);
+  document.getElementById('crono-hms').textContent=fmtHMS(s);
+  const mat=getMat(crono.materiaAtiva);
+  const pct=Math.min(100,Math.round(s/mat.meta*100));
+  document.getElementById('bp-fill').style.width=pct+'%';
+  document.getElementById('bp-pct').textContent=pct+'%';
+}
+function pararSessao(){
+  if(!crono.materiaAtiva) return;
+  if(crono.inicioBruto) pausarCrono();
+  if(crono.acumuladoSessao > 10){
+    crono.sessoes.push({materia:crono.materiaAtiva, duracao:crono.acumuladoSessao, data:hojeKey(), inicio:Date.now()});
+    salvarTudo();
+  }
+  crono.acumuladoSessao=0;
+  document.getElementById('crono-hms').textContent="00:00:00";
+  renderMateriasList();
+}
+
+// ════════════════════════════════════════
+// QUESTÕES
+// ════════════════════════════════════════
+function renderSelecao(){
+  atualizarPlacarQ();
+  const grid=document.getElementById('materias-grid'); grid.innerHTML='';
+  EDITAL.forEach(mat=>{
+    const h = Object.keys(qEstado.historico).filter(k=>k.startsWith(mat.id)).reduce((acc,k)=>{acc.a+=qEstado.historico[k].acertos; acc.t+=(qEstado.historico[k].acertos+qEstado.historico[k].erros); return acc;},{a:0,t:0});
+    const pct = h.t>0 ? Math.round((h.a/h.t)*100) : null;
+    const card=document.createElement('div'); card.className='mat-card';
+    card.innerHTML=`<div class="mat-card-header" onclick="toggleMatCard('${mat.id}')"><div class="mat-card-emoji">${mat.emoji}</div><div class="mat-card-info"><div class="mat-card-nome">${mat.nome}</div><div class="mat-card-meta">${mat.temas.length} temas · ${h.t} respondidas</div></div><div class="mat-card-right"><div class="mat-acerto">${pct!==null?pct+'%':'—'}</div><div class="mat-seta">›</div></div></div><div class="temas-lista" id="temas-${mat.id}"></div>`;
+    const temasEl=card.querySelector('.temas-lista');
+    mat.temas.forEach(tema=>{
+      const th=qEstado.historico[`${mat.id}|${tema}`]||{acertos:0,erros:0};
+      const btn=document.createElement('button'); btn.className='tema-btn';
+      btn.innerHTML=`<span>${tema}</span><span class="tema-pct">${th.acertos+th.erros>0?Math.round((th.acertos/(th.acertos+th.erros))*100)+'%':'novo'}</span>`;
+      btn.onclick=()=>iniciarTema(mat.id,tema); temasEl.appendChild(btn);
+    });
+    grid.appendChild(card);
+  });
+}
+function toggleMatCard(id){ document.querySelectorAll('.mat-card').forEach(c=>{ if(c.querySelector(`#temas-${id}`)) c.classList.toggle('expandido'); else c.classList.remove('expandido'); }); }
+function iniciarTema(matId,tema){ qEstado.matAtiva=matId; qEstado.temaAtivo=tema; qEstado.contador=0; qEstado.respondidasLocal=[]; showQView('questao'); gerarQuestao(); }
+function showQView(id){ document.querySelectorAll('.q-view').forEach(v => v.classList.remove('active')); document.getElementById('qv-'+id).classList.add('active'); }
+function voltarSelecao(){ showQView('selecao'); renderSelecao(); }
+function atualizarPlacarQ(){
+  const tot=qEstado.acertos+qEstado.erros; const pct=tot>0?Math.round(qEstado.acertos/tot*100)+'%':'—';
+  ['qs-acertos','p-acertos'].forEach(id=>document.getElementById(id).textContent=qEstado.acertos);
+  ['qs-erros','p-erros'].forEach(id=>document.getElementById(id).textContent=qEstado.erros);
+  ['qs-pct','p-pct'].forEach(id=>document.getElementById(id).textContent=pct);
+}
+function gerarQuestao(){
+  qEstado.questaoAtual=null; qEstado.respostaUsuario=null; qEstado.contador++;
+  document.getElementById('q-contador').textContent='#'+qEstado.contador;
+  document.getElementById('questao-card').style.display='none'; document.getElementById('comentario').classList.remove('visible'); document.getElementById('proxima-wrap').style.display='none';
+  let disponiveis = BANCO_QUESTOES.filter(q => q.materia === qEstado.matAtiva && q.tema === qEstado.temaAtivo && !qEstado.respondidasLocal.includes(q.id));
+  if(disponiveis.length > 0){
+    const q = disponiveis[Math.floor(Math.random()*disponiveis.length)];
+    qEstado.questaoAtual=q; qEstado.respondidasLocal.push(q.id); renderQuestao(q);
+  } else { alert("Questões locais esgotadas!"); voltarSelecao(); }
+}
+function renderQuestao(q){
+  document.getElementById('q-num-badge').textContent='QUESTÃO '+qEstado.contador;
+  document.getElementById('q-dificuldade').textContent=q.dificuldade;
+  document.getElementById('q-enunciado').innerHTML=q.enunciado;
+  const altsEl=document.getElementById('alternativas'); altsEl.innerHTML='';
+  q.alternativas.forEach(alt=>{
+    const btn=document.createElement('button'); btn.className='alt-btn'; btn.dataset.letra=alt.letra;
+    btn.innerHTML=`<span class="alt-letra">${alt.letra}</span><span class="alt-texto">${alt.texto}</span>`;
+    btn.onclick=()=>responder(alt.letra); altsEl.appendChild(btn);
+  });
+  document.getElementById('questao-card').style.display='block';
+}
+function responder(letra){
+  if(qEstado.respostaUsuario) return; qEstado.respostaUsuario=letra;
+  const q=qEstado.questaoAtual; const ok=letra===q.correta;
+  document.querySelectorAll('.alt-btn').forEach(btn=>{
+    btn.disabled=true; const l=btn.dataset.letra;
+    if(l===q.correta) btn.classList.add('correta'); else if(l===letra) btn.classList.add('errada'); else btn.classList.add('neutra');
+  });
+  const k=`${qEstado.matAtiva}|${qEstado.temaAtivo}`; if(!qEstado.historico[k]) qEstado.historico[k]={acertos:0,erros:0};
+  ok?qEstado.historico[k].acertos++:qEstado.historico[k].erros++; ok?qEstado.acertos++:qEstado.erros++;
+  salvarTudo(); atualizarPlacarQ();
+  document.getElementById('resultado-banner').className='resultado-banner '+(ok?'acerto':'erro');
+  document.getElementById('resultado-icone').textContent=ok?'✓':'✗';
+  document.getElementById('resultado-titulo').textContent=ok?'CORRETO!':'INCORRETO';
+  document.getElementById('ia-conteudo').innerHTML=`<p>${q.explicacao_correta}</p><p style="margin-top:10px; color:var(--blue)"><strong>Dica:</strong> ${q.dica_prova}</p>`;
+  document.getElementById('comentario').classList.add('visible'); document.getElementById('proxima-wrap').style.display='block';
+}
+
+// ════════════════════════════════════════
+// CRONOGRAMA
+// ════════════════════════════════════════
+function renderCronograma(){
+  const nav=document.getElementById('semana-nav'); nav.innerHTML='';
+  const dias=['SEG','TER','QUA','QUI','SEX','SÁB'];
+  dias.forEach((d,i)=>{
+    const tab=document.createElement('div'); tab.className='dia-tab'+(plano.diaAtivo===i?' ativo':'');
+    tab.innerHTML=`<div class="dia-abrev">${d}</div>`;
+    tab.onclick=()=>{plano.diaAtivo=i; renderCronograma();}; nav.appendChild(tab);
+  });
+  const lista=document.getElementById('crono-lista'); lista.innerHTML='';
+  plano.blocos[plano.diaAtivo].forEach((b,idx)=>{
+    const mat=getMat(b.materia);
+    const div=document.createElement('div'); div.className='crono-bloco';
+    div.innerHTML=`<div class="crono-cor" style="background:${mat.cor}"></div><div class="crono-info"><div class="crono-hora">${b.hora} · ${b.duracao}min</div><div class="crono-materia-nome">${mat.emoji} ${mat.nome}</div><div class="crono-tema">${b.tema}</div></div><div class="crono-badge ${b.concluido?'feito':''}" onclick="toggleBloco(${idx})">${b.concluido?'FEITO':'PENDENTE'}</div><button style="background:none;border:none;color:var(--muted);cursor:pointer" onclick="abrirModalEditar(${idx})">✎</button>`;
+    lista.appendChild(div);
+  });
+}
+function toggleBloco(idx){ plano.blocos[plano.diaAtivo][idx].concluido = !plano.blocos[plano.diaAtivo][idx].concluido; salvarTudo(); renderCronograma(); }
+
+let modalIdx = null;
+function abrirModalNovo(){
+  modalIdx=null; document.getElementById('modal-title').textContent='NOVO BLOCO';
+  document.getElementById('modal-tema').value=''; document.getElementById('modal-delete-btn').style.display='none';
+  renderMatGrid(); document.getElementById('modal-overlay').classList.add('open');
+}
+function abrirModalEditar(idx){
+  modalIdx=idx; const b=plano.blocos[plano.diaAtivo][idx];
+  document.getElementById('modal-title').textContent='EDITAR BLOCO';
+  modalMatAtiva=b.materia; document.getElementById('modal-tema').value=b.tema;
+  document.getElementById('modal-hora').value=b.hora; document.getElementById('modal-duracao').value=b.duracao;
+  document.getElementById('modal-delete-btn').style.display='block';
+  renderMatGrid(); document.getElementById('modal-overlay').classList.add('open');
+}
+function renderMatGrid(){
+  const grid=document.getElementById('modal-mat-grid'); grid.innerHTML='';
+  EDITAL.forEach(m=>{
+    const opt=document.createElement('div'); opt.className='mat-opt-mini'+(modalMatAtiva===m.id?' selected':'');
+    opt.innerHTML=`<div class="mat-opt-emoji">${m.emoji}</div><div class="mat-opt-label">${m.nome.substring(0,4)}</div>`;
+    opt.onclick=()=>{modalMatAtiva=m.id; renderMatGrid();}; grid.appendChild(opt);
+  });
+}
+function fecharModalDireto(){ document.getElementById('modal-overlay').classList.remove('open'); }
+function fecharModal(e){ if(e.target.id==='modal-overlay') fecharModalDireto(); }
+function salvarBloco(){
+  const b={materia:modalMatAtiva, tema:document.getElementById('modal-tema').value||'Estudo', hora:document.getElementById('modal-hora').value, duracao:document.getElementById('modal-duracao').value, concluido:false};
+  if(modalIdx===null) plano.blocos[plano.diaAtivo].push(b); else plano.blocos[plano.diaAtivo][modalIdx]=b;
+  plano.blocos[plano.diaAtivo].sort((a,b)=>a.hora.localeCompare(b.hora));
+  salvarTudo(); fecharModalDireto(); renderCronograma();
+}
+function deletarBloco(){ if(modalIdx!==null) plano.blocos[plano.diaAtivo].splice(modalIdx,1); salvarTudo(); fecharModalDireto(); renderCronograma(); }
+
+// INIT
+carregarTudo();
+renderHoje();
+</script>
+</body>
+</html>
